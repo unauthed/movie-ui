@@ -1,0 +1,48 @@
+localhost:80 https://codetor.com http://codetor.com {
+  gzip
+
+  root /srv
+
+#  git github.com/unauthed/movie-ui {
+#    branch caddy
+#  }
+
+  tls off
+  # tls ssl@codetor.com
+
+#  rewrite {
+#    regexp .*
+#    ext /
+#    to /
+#  }
+
+  limits {
+    header 100KB
+    body /upload 100MB
+    body /api 10KB
+  }
+
+  proxy /api/v1/ movie-svc:8080 {
+    health_check /health
+    insecure_skip_verify
+    transparent
+  }
+
+  header / {
+    # Enable HTTP Strict Transport Security (HSTS) to force clients to always
+    Strict-Transport-Security "max-age=31536000;"
+    # Enable cross-site filter (XSS) and tell browser to block detected attacks
+    X-XSS-Protection "1; mode=block"
+    # Prevent some browsers from MIME-sniffing a response away from the declared Content-Type
+    X-Content-Type-Options "nosniff"
+    # Disallow the site to be rendered within a frame (clickjacking protection)
+    X-Frame-Options "DENY"
+  }
+
+  log stdout
+  errors stdout
+}
+
+# :80 {
+#   redir http://codetor.com{uri}
+# }

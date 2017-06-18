@@ -1,0 +1,55 @@
+
+version: "3"
+
+services:
+
+  movie-ui:
+    image: unauthed/movie-ui
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - movie-svc
+    environment:
+      - CADDYPATH="/etc/caddycerts"
+    volumes:
+      - movie-ui-volume:/etc/caddycerts
+
+  movie-svc:
+    image: unauthed/movie-svc
+    ports:
+      - "9090:8080"
+    depends_on:
+      - mongo
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - MONGO_HOST=mongo
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+#      interval: 1m30s
+#      timeout: 10s
+#      retries: 3
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+        window: 20s
+
+  mongo:
+    image: mongo:3.4
+    volumes:
+      - mongo-volume:/data/db
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+volumes:
+
+  movie-ui-volume:
+    driver: local
+
+  mongo-volume:
+    driver: local
